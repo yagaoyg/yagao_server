@@ -1,14 +1,25 @@
 import fs from 'fs'
-import path from 'path'
+
+const upKey = '221722yang'
 
 // 定义获取md文件的路由处理函数
 export const getMd = (req, res) => {
-  fs.readFile(`./assets/md/${req.params.id}.md`, (err, data) => {
+  fs.readFile('./data/mdlist.json', (err, data) => {
     if (err) {
       console.log(err)
       return
     } else {
-      res.send(data.toString())
+      const mdList = JSON.parse(data.toString())
+      const mdData = mdList.find((item) => item.id === parseInt(req.params.id))
+      fs.readFile(`./assets/md/${req.params.id}.md`, (err, data) => {
+        if (err) {
+          console.log(err)
+          return
+        } else {
+          mdData.content = data.toString()
+          res.send(mdData)
+        }
+      })
     }
   })
 }
@@ -30,8 +41,12 @@ export const uploadMd = (req, res) => {
   console.log(req)
   console.log(req.file)
   console.log(req.body)
-  const { title, abstract, time } = req.body
+  const { key, title, abstract, time } = req.body
   const file = req.file
+
+  if (key !== upKey) {
+    return res.status(500).send({ message: '上传密钥错误 权限不足' })
+  }
 
   if (!file || !title || !abstract || !time) {
     return res.status(400).send({ message: '缺少必要的参数或文件' })
